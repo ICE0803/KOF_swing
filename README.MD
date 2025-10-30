@@ -2,11 +2,11 @@
 
  
 
-开发者：Zimo
+在开发者：Zimo的基础上做的更改
 
 ## 1. 介绍
 
-本项目拳皇游戏是一款休闲类格斗游戏，支持双人联机对战，容易上手、操作简单，是闲暇之余休闲娱乐不可缺少的一款游戏。本项目基于面向对象的java语言，采用swing框架，主要应用的技术有：Exception, Thread, GUI, Network, I / O stream, Collection等。
+本项目基于面向对象的java语言，采用swing框架，主要应用的技术有：Exception, Thread, GUI, Network, I / O stream, Collection等。
 
 ### 1.1 Exception
 

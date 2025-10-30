@@ -101,10 +101,10 @@ public class Dir {
                 character.getPosition().x = limitLocation(character.getPosition().x,character.getSPEED(),0,730,false);
             }
             if (RU || LU) {//往上走
-                character.getPosition().y = limitLocation(character.getPosition().y,character.getSPEED(),30,270,false);
+                character.getPosition().y = limitLocation(character.getPosition().y,character.getSPEED(),120,260,false);
             }
             if (RD || LD) {//往下走
-                character.getPosition().y = limitLocation(character.getPosition().y,character.getSPEED(),30,270,true);
+                character.getPosition().y = limitLocation(character.getPosition().y,character.getSPEED(),120,260,true);
             }
         }
 

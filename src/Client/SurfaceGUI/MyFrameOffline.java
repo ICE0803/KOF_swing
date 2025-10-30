@@ -4,6 +4,7 @@ import Client.Advance.ImageButton;
 import Client.Advance.Music;
 import Client.Character.Character;
 import Client.SurfaceGUI.BeginGUI;
+import Client.SurfaceGUI.CharacterSelectionGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,20 +28,31 @@ public class MyFrameOffline extends JFrame {
     private Thread paintThread;//刷新界面线程
     
     private boolean isFinish;//游戏是否结束
+    // 胜利图像标签
+    private JLabel victoryLabel;
+    // 失败图像标签
+    private JLabel defeatLabel;
 
     public MyFrameOffline(int playerNumber) {
-        super("GAME OFFLINE");
+        this(playerNumber, "images/cao"); // 默认使用cao角色
+    }
+    
+    public MyFrameOffline(int playerNumber, String playerCharacterPath) {
+        super("单机模式");
         
-        // 设置玩家角色和AI角色
-        Character fighter1 = new Character("fighter1",true,"images/cao",100,150);
-        Character fighter2 = new Character("fighter2", false,"images/Chris",650,150);
+        // 创建两个战斗机对象
+        // 根据玩家选择的角色路径创建玩家角色
+        Character playerFighterObj = new Character("player", true, playerCharacterPath, 50, 180);
+        // AI角色使用另一个角色
+        String aiCharacterPath = playerCharacterPath.equals("images/cao") ? "images/Chris" : "images/cao";
+        Character aiFighterObj = new Character("ai", true, aiCharacterPath, 650, 180);
         
         if (playerNumber == 1) {
-            playerFighter = fighter1;
-            aiFighter = fighter2;
+            playerFighter = playerFighterObj;
+            aiFighter = aiFighterObj;
         } else {
-            playerFighter = fighter2;
-            aiFighter = fighter1;
+            playerFighter = aiFighterObj;
+            aiFighter = playerFighterObj;
         }
         
         // 设置AI移动速度为较慢的值（玩家速度的一半）
@@ -75,9 +87,9 @@ public class MyFrameOffline extends JFrame {
         replay.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 重新开始单机游戏
+                // 回到角色选择界面
                 dispose();
-                MyFrameOffline offlineFrame = new MyFrameOffline(1);
+                CharacterSelectionGUI selectionGUI = new CharacterSelectionGUI(1, true);
             }
         });
         
@@ -92,17 +104,65 @@ public class MyFrameOffline extends JFrame {
             }
         });
         
+        // 创建一个面板来容纳胜利/失败标签
+        JPanel resultPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // 设置面板背景透明
+            }
+        };
+        resultPanel.setOpaque(false);
+        resultPanel.setLayout(new BorderLayout()); // 使用BorderLayout更容易控制居中
+        
+        // 添加胜利图像标签
+        victoryLabel = new JLabel();
+        ImageIcon victoryIcon = new ImageIcon(Character.class.getClassLoader().getResource("images/victory.png"));
+        // 缩放图像到合适大小
+        Image victoryImg = victoryIcon.getImage();
+        Image scaledVictoryImg = victoryImg.getScaledInstance(400, 200, Image.SCALE_SMOOTH);
+        victoryLabel.setIcon(new ImageIcon(scaledVictoryImg));
+        victoryLabel.setHorizontalAlignment(JLabel.CENTER);
+        victoryLabel.setVerticalAlignment(JLabel.CENTER);
+        victoryLabel.setVisible(false); // 一开始不可见
+        
+        // 添加失败图像标签
+        defeatLabel = new JLabel();
+        ImageIcon defeatIcon = new ImageIcon(Character.class.getClassLoader().getResource("images/defeat.png"));
+        // 缩放图像到合适大小
+        Image defeatImg = defeatIcon.getImage();
+        Image scaledDefeatImg = defeatImg.getScaledInstance(400, 200, Image.SCALE_SMOOTH);
+        defeatLabel.setIcon(new ImageIcon(scaledDefeatImg));
+        defeatLabel.setHorizontalAlignment(JLabel.CENTER);
+        defeatLabel.setVerticalAlignment(JLabel.CENTER);
+        defeatLabel.setVisible(false); // 一开始不可见
+        
+        // 创建一个容器面板用于居中显示标签，并添加垂直边距
+        JPanel labelContainer = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+            }
+        };
+        labelContainer.setOpaque(false);
+        labelContainer.setBorder(BorderFactory.createEmptyBorder(100, 0, 0, 0)); // 上边距100像素
+        labelContainer.add(victoryLabel);
+        labelContainer.add(defeatLabel);
+        
+        resultPanel.add(labelContainer, BorderLayout.CENTER);
+        
         surface.setLayout(new BorderLayout());
-        JPanel panel = new JPanel();
-        panel.setOpaque(false);
-        panel.add(replay);
-        panel.add(quit);
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setOpaque(false);
+        buttonPanel.add(replay);
+        buttonPanel.add(quit);
         
         // 一开始不可见
         replay.setVisible(false);
         quit.setVisible(false);
         
-        surface.add(panel,BorderLayout.SOUTH);
+        surface.add(resultPanel, BorderLayout.NORTH);
+        surface.add(buttonPanel, BorderLayout.SOUTH);
         
         // 启动刷新线程
         paintThread = new Thread(new PaintThread());
@@ -112,10 +172,10 @@ public class MyFrameOffline extends JFrame {
     // 单机模式的PaintThread
      class PaintThread implements Runnable {
          public void run() {
-             while(true) {
+             while(!isFinish) {
                  surface.repaint();
                  try {
-                     Thread.sleep(30);//设备帧数：15 -> 60FPS
+                     Thread.sleep(15);//设备帧数：15 -> 60FPS
                  } catch (InterruptedException e) {
                      e.printStackTrace();
                      break;
@@ -145,7 +205,7 @@ public class MyFrameOffline extends JFrame {
 
             //加载背景 - 适应窗口大小
             Toolkit tk =Toolkit.getDefaultToolkit();
-            Image backGround = tk.getImage(Character.class.getClassLoader().getResource("images/background.png"));//加载背景
+            Image backGround = tk.getImage(Character.class.getClassLoader().getResource("images/background2.png"));//加载背景
             g.drawImage(backGround,0,0,getWidth(),getHeight(),null);
 
             //加载状态栏 - 左右两侧各一个
@@ -166,7 +226,7 @@ public class MyFrameOffline extends JFrame {
                 g.drawImage(p1HP,40,0,statusWidth,statusHeight,null);
                 
                 // AI血条绘制在右侧状态栏上方
-                g.drawImage(p2HP,getWidth() - statusWidth - 40,0,statusWidth,statusHeight,null);
+                g.drawImage(p2HP,40,0,statusWidth,statusHeight,null);
 
                 //调整视角，处理单机模式下的角色移动
                 if(aiFighter.getPosition().y < playerFighter.getPosition().y) {
@@ -183,20 +243,28 @@ public class MyFrameOffline extends JFrame {
             //判断输赢
             else if(aiFighter.getHP() <= 0 && playerFighter.getHP() > 0) {
                 //玩家胜利
-                Image victory = tk.getImage(Character.class.getClassLoader().getResource("images/victory.png"));
-                int victoryWidth = victory.getWidth(null) / 5 * 4;
-                int victoryHeight = victory.getHeight(null) / 5 * 4;
-                g.drawImage(victory,(getWidth() - victoryWidth) / 2,50,victoryWidth,victoryHeight,null);
+                isFinish = true; // 设置游戏结束标志
+                
+                if (aiController != null) {
+                    aiController.stop();
+                }
+                
+                // 显示胜利图像
+                victoryLabel.setVisible(true);
                 
                 // 显示重玩和退出按钮
                 replay.setVisible(true);
                 quit.setVisible(true);
             } else if(playerFighter.getHP() <= 0 && aiFighter.getHP() > 0) {
                 //AI胜利
-                Image defeat = tk.getImage(Character.class.getClassLoader().getResource("images/defeat.png"));
-                int defeatWidth = defeat.getWidth(null) / 3 * 2;
-                int defeatHeight = defeat.getHeight(null) / 3 * 2;
-                g.drawImage(defeat,(getWidth() - defeatWidth) / 2,50,defeatWidth,defeatHeight,null);
+                isFinish = true; // 设置游戏结束标志
+                
+                if (aiController != null) {
+                    aiController.stop();
+                }
+                
+                // 显示失败图像
+                defeatLabel.setVisible(true);
                 
                 // 显示重玩和退出按钮
                 replay.setVisible(true);
@@ -468,9 +536,19 @@ public class MyFrameOffline extends JFrame {
     
     @Override
     public void dispose() {
+        // 停止AI控制器线程
         if (aiController != null) {
             aiController.stop();
         }
+        
+        // 设置游戏结束标志，使paintThread退出循环
+        isFinish = true;
+        
+        // 停止刷新线程
+        if (paintThread != null && paintThread.isAlive()) {
+            paintThread.interrupt();
+        }
+        
         super.dispose();
     }
 }

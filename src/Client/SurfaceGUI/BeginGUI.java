@@ -61,11 +61,11 @@ public class BeginGUI extends JFrame {
         offlineButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 启动单机模式
+                // 启动单机模式 - 打开角色选择界面
                 dispose();
-                // 创建单机游戏界面
-                MyFrameOffline offlineFrame = new MyFrameOffline(1);
-                System.out.println("单机模式启动");
+                // 创建角色选择界面
+                CharacterSelectionGUI selectionGUI = new CharacterSelectionGUI(1, true);
+                System.out.println("单机模式角色选择界面启动");
             }
         });
 
@@ -124,9 +124,9 @@ public class BeginGUI extends JFrame {
 
 
 
-        JLabel author = new JLabel("Author: ");
+        JLabel author = new JLabel("");
         author.setForeground(Color.white);
-        author.setFont(new Font("Dialog", 1, 15));
+        author.setFont(new Font("Dialog", 1, 1));
 
 
 

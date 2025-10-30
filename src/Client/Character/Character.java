@@ -15,7 +15,7 @@ public class Character {
 
     private  ArrayList<Image> movements;//人物角色的动作：左右停
 
-    private int SPEED = 15;//当前移动速度（放大人物后适当提高速度）
+    private int SPEED = 10;//当前移动速度（放大人物后适当提高速度）
 
     private Point position;//当前位置
 
@@ -83,7 +83,7 @@ public class Character {
                 return true;
             } else {
                 System.out.println("攻击检测: 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ")");
-                System.out.println("水平距离: " + horizontalDistance + " (需要<=180), 垂直距离: " + verticalDistance + " (需要<=90) - 攻击失败");
+                System.out.println("水平距离: " + horizontalDistance + " (需要<=100), 垂直距离: " + verticalDistance + " (需要<=30) - 攻击失败");
             }
         } else {
             System.out.println("攻击检测: 被攻击者处于FALL状态，无法被攻击");

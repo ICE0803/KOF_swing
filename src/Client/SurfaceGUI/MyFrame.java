@@ -378,10 +378,46 @@ public class MyFrame extends JFrame {
                 }
                 break;
 
+            case KeyEvent.VK_K:
+                // 检查踢腿冷却时间
+                if (!fighter.canKick()) {
+                    System.out.println("踢腿冷却中，剩余时间：" + fighter.getKickRemainingCooldown() + "ms");
+                    break;
+                }
+
+                fighter.setKickTime();
+
+                // 执行踢腿动作
+                Runnable kickTask = new Runnable() {
+                    @Override
+                    public void run() {
+                        fighter.getDir().KICK = true;
+                        try {
+                            Thread.sleep(300); // 踢腿动作持续时间
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                        fighter.getDir().KICK = false;
+                    }
+                };
+                Thread kickThread = new Thread(kickTask);
+                kickThread.start();
+
+                if(Character.isKicked(fighter,otherFighter) && fighter.equals(myFighter) ) {
+                    try{
+                        out.println("@KICK@");//发送给客户端2攻击成功
+
+                        otherFighter.setHP(otherFighter.getHP() - 1);
+                        otherFighter.getDir().fighterFall();
+                    } catch (NullPointerException e) {
+                        System.out.println("kick");
+                    }
+
+                }
 
         }
         if(keyCode == KeyEvent.VK_W ||
-                keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J) {
+                keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J || keyCode == KeyEvent.VK_K) {
             fighter.getDir().LS = false;
             fighter.getDir().RS = false;
             //gif方向

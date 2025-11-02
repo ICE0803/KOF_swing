@@ -22,6 +22,7 @@ public class Dir {
     public boolean RD;//左下
 
     public boolean A;//攻击
+    public boolean KICK;
     public boolean FALL;//被击倒
 
 
@@ -40,6 +41,7 @@ public class Dir {
 
         //攻击和击倒
         A = false;
+        KICK = false;
         FALL = false;
     }
 
@@ -48,7 +50,7 @@ public class Dir {
     public void createMap(ArrayList<Image> movements) {
         //将movement做成maps
         //Left Forward, Left Stand, ...往右走，往右停，往左走，往左停,左攻击，右攻击，左倒，右倒
-        String[] keys = {"LF","LS","RF","RS","LA","RA","LH","RH"};
+        String[] keys = {"LF","LS","RF","RS","LA","RA","LH","RH","LK","RK"};
         for(int i = 0; i < movements.size(); i++) {
             moveMap.put(keys[i],movements.get(i));
         }
@@ -58,7 +60,7 @@ public class Dir {
 
     public void locateDirection() {
         if(!LF && !RF && !RU && !LU && !RD && //无动作触发，站立
-                !LD && !A && !FALL) {//如果没有其他动作，就站立
+                !LD && !A && !KICK && !FALL) {//如果没有其他动作，就站立
             if (getCurrentDir() == Character.LEFT) {
                 LS = true;
                 setCurrentMovement(getMoveMap().get("LS"));
@@ -74,13 +76,16 @@ public class Dir {
         else if(A) {//若检测到攻击键按下
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LA"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RA"));
+        }else if(KICK){
+            if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LK"));//如果LA为真，则触发攻击动作
+            else  setCurrentMovement(getMoveMap().get("RK"));
         } else {
-            if (LF || LU || LD) {
-                setCurrentMovement(getMoveMap().get("LF"));//否则前进
-            } else if (RF || RU || RD){
-                setCurrentMovement(getMoveMap().get("RF"));
+                if (LF || LU || LD) {
+                    setCurrentMovement(getMoveMap().get("LF"));//否则前进
+                } else if (RF || RU || RD){
+                    setCurrentMovement(getMoveMap().get("RF"));
+                }
             }
-        }
     }//确定方向
 
     public int limitLocation(int position, int speed, int min, int max,boolean isPlus) {

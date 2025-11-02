@@ -341,10 +341,43 @@ public class MyFrameOffline extends JFrame {
                         System.out.println("玩家攻击AI成功！AI剩余血量：" + aiFighter.getHP());
                     }
                     break;
+                case KeyEvent.VK_K:
+                    // 检查踢腿冷却时间
+                    if (!fighter.canKick()) {
+                        System.out.println("踢腿冷却中，剩余时间：" + fighter.getKickRemainingCooldown() + "ms");
+                        break;
+                    }
+                    
+                    // 设置踢腿时间，开始冷却
+                    fighter.setKickTime();
+                    
+                    // 延迟300ms，给予足够反应时间
+                    Runnable kickTask = new Runnable() {
+                        @Override
+                        public void run() {
+                            fighter.getDir().KICK = true;
+                            try {
+                                Thread.sleep(300);
+                            } catch (InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
+                            fighter.getDir().KICK = false;
+                        }
+                    };
+                    Thread kickThread = new Thread(kickTask);
+                    kickThread.start();
+
+                    // 检查踢腿是否命中AI
+                    if (Character.isKicked(fighter, aiFighter)) {
+                        aiFighter.setHP(aiFighter.getHP() - 1);
+                        aiFighter.getDir().fighterFall();
+                        System.out.println("玩家踢腿AI成功！AI剩余血量：" + aiFighter.getHP());
+                    }
+                    break;
             }
             
             if(keyCode == KeyEvent.VK_W ||
-                    keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J) {
+                    keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J ||keyCode == KeyEvent.VK_K) {
                 fighter.getDir().LS = false;
                 fighter.getDir().RS = false;
             }
@@ -368,6 +401,9 @@ public class MyFrameOffline extends JFrame {
                     break;
                 case KeyEvent.VK_D:
                     fighter.getDir().LF = false;
+                    break;
+                case KeyEvent.VK_K:
+                    fighter.getDir().KICK = false;
                     break;
             }
         }

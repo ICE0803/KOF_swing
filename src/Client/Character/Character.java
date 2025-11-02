@@ -23,10 +23,14 @@ public class Character {
     
     private Hitbox hitbox; // 碰撞箱
     private AttackBox leftAttackBox; // 向左攻击箱
-    private AttackBox rightAttackBox; // 向右攻击箱
+    private AttackBox rightAttackBox;// 向右攻击箱
+    private AttackBox leftKickBox;
+    private AttackBox rightKickBox;
     
     private long lastAttackTime = 0;//上次攻击时间
+    private long lastKickTime = 0;
     private static final long ATTACK_COOLDOWN = 500;//攻击冷却时间（毫秒）
+    private static final long KICK_COOLDOWN = 600;
 
 
     public Character(String name,boolean leftOrRight,String rootDir,int x,int y) {
@@ -37,7 +41,7 @@ public class Character {
         position = new Point(x,y);
 
 
-        for(int i = 1; i <= 8; i++) {//将图片加载到ArrayList
+        for(int i = 1; i <= 10; i++) {
             movements.add(tk.getImage(Character.class.getClassLoader()
                     .getResource(rootDir + "/" + i + ".gif")));
         }
@@ -53,27 +57,35 @@ public class Character {
         // 初始化攻击箱
         this.leftAttackBox = new AttackBox(this, "LA");
         this.rightAttackBox = new AttackBox(this, "RA");
+        this.leftKickBox = new AttackBox(this,"LK");
+        this.rightKickBox = new AttackBox(this,"RK");
 
     }//将图片载入缓存区, 并且做好索引
 
 
     //将当前动作画上面板（可以重写调整每一帧动作的图片位置）
     protected void drawCurrentMovement(Graphics g) {
-        Image currentMovement = dir.getCurrentMovement();
+        // 先更新方向再获取当前动作
         dir.locateDirection();//更新目前的动作
+        Image currentMovement = dir.getCurrentMovement();
         
-        // 更新碰撞箱位置
-        hitbox.updatePosition();
-        
-        // 更新攻击箱位置
-        leftAttackBox.updatePosition();
-        rightAttackBox.updatePosition();
-        
-        g.drawImage(currentMovement,
-                (int)position.getX(),
-                (int)position.getY(),
-                currentMovement.getWidth(null) * 2,
-                currentMovement.getHeight(null) * 2,null);
+        // 添加null检查避免空指针异常
+        if (currentMovement != null) {
+            // 更新碰撞箱位置
+            hitbox.updatePosition();
+            
+            // 更新攻击箱位置
+            leftAttackBox.updatePosition();
+            rightAttackBox.updatePosition();
+            leftKickBox.updatePosition();
+            rightKickBox.updatePosition();
+            
+            g.drawImage(currentMovement,
+                    (int)position.getX(),
+                    (int)position.getY(),
+                    currentMovement.getWidth(null) * 2,
+                    currentMovement.getHeight(null) * 2,null);
+        }
 
     }
 
@@ -114,6 +126,33 @@ public class Character {
             System.out.println("攻击检测: 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ") - 攻击失败");
         }
         
+        return false;
+    }
+
+    public static boolean isKicked(Character fighter1,Character fighter2){
+        if(fighter2.getDir().FALL) {
+            System.out.println("踢腿检测: 被攻击者处于FALL状态，无法被踢中");
+            return false;
+        }
+        AttackBox kickBox = null;
+        if (fighter1.getDir().getCurrentDir() == Character.RIGHT) {
+            // 使用左腿攻击箱
+            kickBox = fighter1.leftKickBox;
+        } else {
+            // 使用右腿攻击箱
+            kickBox = fighter1.rightKickBox;
+        }
+        boolean isHit = kickBox.intersects(fighter2.getHitbox());
+        if (isHit) {
+            Point p1 = fighter1.getPosition();
+            Point p2 = fighter2.getPosition();
+            System.out.println("kick! 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ") - 踢腿成功！");
+            return true;
+        } else {
+            Point p1 = fighter1.getPosition();
+            Point p2 = fighter2.getPosition();
+            System.out.println("踢腿检测: 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ") - 踢腿失败");
+        }
         return false;
     }
     
@@ -221,6 +260,17 @@ public class Character {
     public long getRemainingCooldown() {
         long elapsed = System.currentTimeMillis() - lastAttackTime;
         return Math.max(0, ATTACK_COOLDOWN - elapsed);
+    }
+
+    public boolean canKick(){
+        return System.currentTimeMillis() - lastKickTime >= KICK_COOLDOWN;
+    }
+    public void setKickTime(){
+        lastKickTime = System.currentTimeMillis();
+    }
+    public long getKickRemainingCooldown(){
+        long elapsed = System.currentTimeMillis() - lastKickTime;
+        return Math.max(0, KICK_COOLDOWN - elapsed);
     }
 }
 

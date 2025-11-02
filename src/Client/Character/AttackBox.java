@@ -32,8 +32,8 @@ public class AttackBox {
         // 根据角色当前的位置和攻击类型更新攻击箱位置
         int charX = (int)character.getPosition().getX();
         int charY = (int)character.getPosition().getY();
-        int charWidth = 60; // 角色图片宽度（假设值）
-        int charHeight = 80; // 角色图片高度（假设值）
+        int charWidth = 60; // 角色图片宽度
+        int charHeight = 80; // 角色图片高度
         
         // 根据攻击类型设置不同的攻击箱位置和大小
         if ("LA".equals(attackType)) {
@@ -48,9 +48,25 @@ public class AttackBox {
             // 向右攻击时，攻击箱在角色的右侧
             bounds.setBounds(
                 charX + 100,  // X坐标：角色右侧
-                charY + 20,              // Y坐标：角色中间偏下
-                40,                      // 宽度
-                30                       // 高度
+                charY + 20,  // Y坐标：角色中间偏下
+                40,          // 宽度
+                30           // 高度
+            );
+        } else if ("LK".equals(attackType)) {
+            // 向左踢腿时，攻击箱在角色的左侧下方
+            bounds.setBounds(
+                charX - 10,  // X坐标：角色左侧下方
+                charY + 60,  // Y坐标：角色腿部位置
+                30,          // 宽度
+                20           // 高度
+            );
+        } else if ("RK".equals(attackType)) {
+            // 向右踢腿时，攻击箱在角色的右侧下方
+            bounds.setBounds(
+                charX + 40,  // X坐标：角色右侧下方
+                charY + 60,  // Y坐标：角色腿部位置
+                30,          // 宽度
+                20           // 高度
             );
         } else {
             // 默认情况下，攻击箱与角色碰撞箱相同

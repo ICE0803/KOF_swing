@@ -89,7 +89,7 @@ public class CharacterSelectionGUI extends JFrame {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         
         // 确认按钮
-        confirmButton = new ImageButton("/images/component/begin.png", 2.0/5, 2.0/5);
+        confirmButton = new ImageButton("/images/queren.png", 2.0/5, 2.0/5);
         confirmButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -103,7 +103,7 @@ public class CharacterSelectionGUI extends JFrame {
         });
         
         // 返回按钮
-        backButton = new ImageButton("/images/component/quitBt.png", 2.0/5, 2.0/5);
+        backButton = new ImageButton("/images/qvxiao.png", 2.0/5, 2.0/5);
         backButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

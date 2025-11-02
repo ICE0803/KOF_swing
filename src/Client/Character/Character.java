@@ -30,7 +30,7 @@ public class Character {
     private long lastAttackTime = 0;//上次攻击时间
     private long lastKickTime = 0;
     private static final long ATTACK_COOLDOWN = 500;//攻击冷却时间（毫秒）
-    private static final long KICK_COOLDOWN = 600;
+    private static final long KICK_COOLDOWN = 1000;
 
 
     public Character(String name,boolean leftOrRight,String rootDir,int x,int y) {
@@ -219,6 +219,12 @@ public class Character {
     }
     public AttackBox getRightAttackBox() {
         return rightAttackBox;
+    }
+    public AttackBox getLeftKickBox() {
+        return leftKickBox;
+    }
+    public AttackBox getRightKickBox() {
+        return rightKickBox;
     }
     public int getSPEED() {
         return SPEED;

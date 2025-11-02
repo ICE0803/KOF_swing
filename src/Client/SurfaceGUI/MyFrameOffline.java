@@ -247,10 +247,14 @@ public class MyFrameOffline extends JFrame {
                 playerFighter.getHitbox().drawBounds(g);
                 playerFighter.getLeftAttackBox().drawBounds(g);
                 playerFighter.getRightAttackBox().drawBounds(g);
+                playerFighter.getLeftKickBox().drawBounds(g);
+                playerFighter.getRightKickBox().drawBounds(g);
                 
                 aiFighter.getHitbox().drawBounds(g);
                 aiFighter.getLeftAttackBox().drawBounds(g);
                 aiFighter.getRightAttackBox().drawBounds(g);
+                aiFighter.getLeftKickBox().drawBounds(g);
+                aiFighter.getRightKickBox().drawBounds(g);
             }
             
             //判断输赢
@@ -324,7 +328,7 @@ public class MyFrameOffline extends JFrame {
                         public void run() {
                             fighter.getDir().A = true;
                             try {
-                                Thread.sleep(300);
+                                Thread.sleep(500);
                             } catch (InterruptedException ex) {
                                 ex.printStackTrace();
                             }
@@ -357,7 +361,7 @@ public class MyFrameOffline extends JFrame {
                         public void run() {
                             fighter.getDir().KICK = true;
                             try {
-                                Thread.sleep(300);
+                                Thread.sleep(1000);
                             } catch (InterruptedException ex) {
                                 ex.printStackTrace();
                             }

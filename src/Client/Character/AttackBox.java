@@ -55,18 +55,18 @@ public class AttackBox {
         } else if ("LK".equals(attackType)) {
             // 向左踢腿时，攻击箱在角色的左侧下方
             bounds.setBounds(
-                charX - 10,  // X坐标：角色左侧下方
-                charY + 60,  // Y坐标：角色腿部位置
-                30,          // 宽度
-                20           // 高度
+                charX - 20,  // X坐标：角色左侧下方
+                charY + 120,  // Y坐标：角色腿部位置
+                40,          // 宽度
+                30           // 高度
             );
         } else if ("RK".equals(attackType)) {
             // 向右踢腿时，攻击箱在角色的右侧下方
             bounds.setBounds(
-                charX + 40,  // X坐标：角色右侧下方
-                charY + 60,  // Y坐标：角色腿部位置
-                30,          // 宽度
-                20           // 高度
+                charX + 100,  // X坐标：角色右侧下方
+                charY + 120,  // Y坐标：角色腿部位置
+                40,          // 宽度
+                30           // 高度
             );
         } else {
             // 默认情况下，攻击箱与角色碰撞箱相同

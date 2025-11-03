@@ -31,7 +31,12 @@ public class Character {
     private long lastKickTime = 0;
     private static final long ATTACK_COOLDOWN = 500;//攻击冷却时间（毫秒）
     private static final long KICK_COOLDOWN = 600;
-
+    private boolean isOnGround = true; // 角色是否在地面
+    private double jumpVelocity = 0;  // 跳跃速度
+    private final double GRAVITY = 0.5; // 重力加速度
+    private final double JUMP_FORCE = -12.0; // 跳跃力度
+    private Point jumpStartPosition = new Point(0, 0); // 起跳位置
+    private boolean isJumpingAtSameSpot = true; // 是否在同一位置跳跃
 
     public Character(String name,boolean leftOrRight,String rootDir,int x,int y) {
         Toolkit tk =Toolkit.getDefaultToolkit();
@@ -41,7 +46,7 @@ public class Character {
         position = new Point(x,y);
 
 
-        for(int i = 1; i <= 10; i++) {
+        for(int i = 1; i <= 12; i++) {
             movements.add(tk.getImage(Character.class.getClassLoader()
                     .getResource(rootDir + "/" + i + ".gif")));
         }
@@ -271,6 +276,73 @@ public class Character {
     public long getKickRemainingCooldown(){
         long elapsed = System.currentTimeMillis() - lastKickTime;
         return Math.max(0, KICK_COOLDOWN - elapsed);
+    }
+
+    public boolean isJumping() {
+        return dir.JUMPING;
+    }
+
+    public void setJumping(boolean jumping) {
+        dir.JUMPING = jumping;
+    }
+
+    public boolean isOnGround() {
+        return isOnGround;
+    }
+
+    public void setOnGround(boolean onGround) {
+        this.isOnGround = onGround;
+    }
+
+    public double getJumpVelocity() {
+        return jumpVelocity;
+    }
+
+    public void setJumpVelocity(double velocity) {
+        this.jumpVelocity = velocity;
+    }
+
+    public void updateJumpVelocity() {
+        this.jumpVelocity += GRAVITY;
+    }
+
+    public int getGroundY() {
+        // 返回地面Y坐标，可以根据实际情况调整
+        return 260;
+    }
+
+    /**
+     * 开始跳跃
+     */
+    public void startJump() {
+        if (isOnGround) {
+            // 保存起跳位置
+            jumpStartPosition.setLocation(position);
+            setJumping(true);
+            setOnGround(false);
+            setJumpVelocity(JUMP_FORCE);
+        }
+    }
+    
+    /**
+     * 获取起跳位置
+     */
+    public Point getJumpStartPosition() {
+        return jumpStartPosition;
+    }
+    
+    /**
+     * 是否设置为在同一位置跳跃
+     */
+    public boolean isJumpingAtSameSpot() {
+        return isJumpingAtSameSpot;
+    }
+    
+    /**
+     * 设置是否在同一位置跳跃
+     */
+    public void setJumpingAtSameSpot(boolean jumpingAtSameSpot) {
+        isJumpingAtSameSpot = jumpingAtSameSpot;
     }
 }
 

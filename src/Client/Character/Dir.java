@@ -24,7 +24,9 @@ public class Dir {
     public boolean A;//攻击
     public boolean KICK;
     public boolean FALL;//被击倒
-
+    public boolean JUMPING;
+    public boolean JUMP_UP;
+    public boolean JUMP_DOWN;
 
 
     public Dir(boolean isLeft) {//初始状态是面向左还是面向右
@@ -43,6 +45,9 @@ public class Dir {
         A = false;
         KICK = false;
         FALL = false;
+        JUMPING = false;
+        JUMP_UP = false;
+        JUMP_DOWN = false;
     }
 
 
@@ -50,7 +55,7 @@ public class Dir {
     public void createMap(ArrayList<Image> movements) {
         //将movement做成maps
         //Left Forward, Left Stand, ...往右走，往右停，往左走，往左停,左攻击，右攻击，左倒，右倒
-        String[] keys = {"LF","LS","RF","RS","LA","RA","LH","RH","LK","RK"};
+        String[] keys = {"LF","LS","RF","RS","LA","RA","LH","RH","LK","RK","LJ","RJ"};
         for(int i = 0; i < movements.size(); i++) {
             moveMap.put(keys[i],movements.get(i));
         }
@@ -60,7 +65,7 @@ public class Dir {
 
     public void locateDirection() {
         if(!LF && !RF && !RU && !LU && !RD && //无动作触发，站立
-                !LD && !A && !KICK && !FALL) {//如果没有其他动作，就站立
+                !LD && !A && !KICK && !JUMP_DOWN && !JUMPING && !JUMP_UP && !FALL) {//如果没有其他动作，就站立
             if (getCurrentDir() == Character.LEFT) {
                 LS = true;
                 setCurrentMovement(getMoveMap().get("LS"));
@@ -79,6 +84,9 @@ public class Dir {
         }else if(KICK){
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LK"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RK"));
+        } else if(JUMPING){
+            if (getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LJ"));
+            else  setCurrentMovement(getMoveMap().get("RJ"));
         } else {
                 if (LF || LU || LD) {
                     setCurrentMovement(getMoveMap().get("LF"));//否则前进
@@ -98,18 +106,95 @@ public class Dir {
     }//限制角色走出范围
 
     public void move(Graphics g, Character character) {//更新图片
-        if(!LS && !RS && !FALL) {//移动
+        // 处理跳跃逻辑
+        if (character.isJumping()) {
+            // 更新跳跃速度（应用重力）
+            character.updateJumpVelocity();
+
+            // 更新Y位置
+            character.getPosition().y += character.getJumpVelocity();
+            
+            // 设置跳跃场景边界限制
+            // 下边界限制（防止跳出屏幕底部）
+            // 使用地面Y坐标作为下边界，确保角色不会低于地面
+            int lowerBound = character.getGroundY();
+            if (character.getPosition().y > lowerBound) {
+                character.getPosition().y = lowerBound;
+                // 到达地面时结束跳跃
+                character.setJumping(false);
+                character.setOnGround(true);
+                character.setJumpVelocity(0);
+                JUMP_UP = false;
+                JUMP_DOWN = false;
+            }
+            
+            // 水平边界限制（防止跳出屏幕左右两侧）
+            int leftBound = 0;      // 左边界
+            int rightBound = 730;   // 右边界（与原有limitLocation方法保持一致）
+            if (character.getPosition().x < leftBound) {
+                character.getPosition().x = leftBound;
+            } else if (character.getPosition().x > rightBound) {
+                character.getPosition().x = rightBound;
+            }
+
+            // 检查是否到达地面或跳跃最高点后的回落阶段
+            if (character.isJumpingAtSameSpot() && character.getJumpVelocity() > 0) {
+                // 计算当前跳跃高度
+                double currentHeight = character.getJumpStartPosition().y - character.getPosition().y;
+                
+                // 当跳跃高度开始回落，且回到初始位置时完成跳跃
+                if (character.getPosition().y >= character.getJumpStartPosition().y) {
+                    // 落回起跳位置
+                    character.getPosition().setLocation(character.getJumpStartPosition());
+                    character.setJumping(false);
+                    character.setOnGround(true);
+                    character.setJumpVelocity(0);
+                    JUMP_UP = false;
+                    JUMP_DOWN = false;
+                }
+            } else {
+                // 普通跳跃模式，落回地面
+                if (character.getPosition().y >= character.getGroundY()) {
+                    character.getPosition().y = character.getGroundY();
+                    character.setJumping(false);
+                    character.setOnGround(true);
+                    character.setJumpVelocity(0);
+                    JUMP_UP = false;
+                    JUMP_DOWN = false;
+                }
+            }
+            
+            // 更新跳跃状态
+            if (character.isJumping()) {
+                if (character.getJumpVelocity() < 0) {
+                    // 上升阶段
+                    JUMP_UP = true;
+                    JUMP_DOWN = false;
+                } else {
+                    // 下降阶段
+                    JUMP_UP = false;
+                    JUMP_DOWN = true;
+                }
+            }
+        }
+        
+        // 处理水平移动（无论是否跳跃都允许）
+        if(!LS && !RS && !FALL) {
             if (LF) {//往右走
-                character.getPosition().x = limitLocation(character.getPosition().x,character.getSPEED(),0,730,true);
+                character.getPosition().x = limitLocation(character.getPosition().x, character.getSPEED(), 0, 730, true);
             }
             if (RF) {//往左走
-                character.getPosition().x = limitLocation(character.getPosition().x,character.getSPEED(),0,730,false);
+                character.getPosition().x = limitLocation(character.getPosition().x, character.getSPEED(), 0, 730, false);
             }
-            if (RU || LU) {//往上走
-                character.getPosition().y = limitLocation(character.getPosition().y,character.getSPEED(),120,260,false);
-            }
-            if (RD || LD) {//往下走
-                character.getPosition().y = limitLocation(character.getPosition().y,character.getSPEED(),120,260,true);
+            
+            // 只有不在跳跃时才允许垂直移动（地面移动）
+            if (!character.isJumping()) {
+                if (RU || LU) {//往上走
+                    character.getPosition().y = limitLocation(character.getPosition().y, character.getSPEED(), 120, 260, false);
+                }
+                if (RD || LD) {//往下走
+                    character.getPosition().y = limitLocation(character.getPosition().y, character.getSPEED(), 120, 260, true);
+                }
             }
         }
 

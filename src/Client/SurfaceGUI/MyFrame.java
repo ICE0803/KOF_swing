@@ -363,21 +363,17 @@ public class MyFrame extends JFrame {
                 Thread thread = new Thread(task);
                 thread.start();
 
-
                 //如果是客户端触发的攻击
                 if(Character.isAttacked(fighter,otherFighter) && fighter.equals(myFighter) ) {
                         try{
                             out.println("@ATTACK@");//发送给客户端2攻击成功
-
                             otherFighter.setHP(otherFighter.getHP() - 1);
                             otherFighter.getDir().fighterFall();
                         } catch (NullPointerException e) {
                             System.out.println("a");
                         }
-
                 }
                 break;
-
             case KeyEvent.VK_K:
                 // 检查踢腿冷却时间
                 if (!fighter.canKick()) {
@@ -406,24 +402,25 @@ public class MyFrame extends JFrame {
                 if(Character.isKicked(fighter,otherFighter) && fighter.equals(myFighter) ) {
                     try{
                         out.println("@KICK@");//发送给客户端2攻击成功
-
                         otherFighter.setHP(otherFighter.getHP() - 1);
                         otherFighter.getDir().fighterFall();
                     } catch (NullPointerException e) {
                         System.out.println("kick");
                     }
-
                 }
-
+                break;
+            case KeyEvent.VK_SPACE: // 绑定空格键为跳跃键
+                if (fighter.isOnGround()) {
+                    fighter.startJump();
+                }
+                break;
         }
+        
         if(keyCode == KeyEvent.VK_W ||
-                keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J || keyCode == KeyEvent.VK_K) {
+                keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J || keyCode == KeyEvent.VK_K || keyCode == KeyEvent.VK_SPACE) {
             fighter.getDir().LS = false;
             fighter.getDir().RS = false;
-            //gif方向
-            //locateDirection();
         }
-
     }//检测按键
     public void getKeyReleased(Character fighter, int keyCode) {
 

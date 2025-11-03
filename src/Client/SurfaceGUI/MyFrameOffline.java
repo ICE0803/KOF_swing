@@ -374,10 +374,15 @@ public class MyFrameOffline extends JFrame {
                         System.out.println("玩家踢腿AI成功！AI剩余血量：" + aiFighter.getHP());
                     }
                     break;
+                case KeyEvent.VK_SPACE:
+                    if (fighter.isOnGround()) {
+                        fighter.startJump();
+                    }
+                    break;
             }
             
             if(keyCode == KeyEvent.VK_W ||
-                    keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J ||keyCode == KeyEvent.VK_K) {
+                    keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J ||keyCode == KeyEvent.VK_K || keyCode == KeyEvent.VK_SPACE){
                 fighter.getDir().LS = false;
                 fighter.getDir().RS = false;
             }
@@ -449,15 +454,18 @@ public class MyFrameOffline extends JFrame {
                 if (Math.random() < 0.15) {
                     // 15%概率攻击
                     performAttack();
-                } else {
-                    // 85%概率移动
+                } else if(Math.random() < 0.1 && aiFighter.isOnGround()){
+                    aiFighter.startJump();
+                }else {
                     moveRandomly();
                 }
             } else {
                 // 近距离，中等概率攻击
                 if (Math.random() < 0.4) {
                     performAttack();
-                } else {
+                } else if(Math.random() < 0.1 && aiFighter.isOnGround()){
+                    aiFighter.startJump();
+                }else {
                     moveRandomly();
                 }
             }

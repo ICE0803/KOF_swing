@@ -29,28 +29,28 @@ public class Character {
     
     private long lastAttackTime = 0;//上次攻击时间
     private long lastKickTime = 0;
-    private static final long ATTACK_COOLDOWN = 500;//攻击冷却时间（毫秒）
+    private static final long ATTACK_COOLDOWN = 600;//攻击冷却时间（毫秒）
     private static final long KICK_COOLDOWN = 600;
     private boolean isOnGround = true; // 角色是否在地面
     private double jumpVelocity = 0;  // 跳跃速度
     private final double GRAVITY = 0.5; // 重力加速度
     private final double JUMP_FORCE = -12.0; // 跳跃力度
     private Point jumpStartPosition = new Point(0, 0); // 起跳位置
-    private boolean isJumpingAtSameSpot = true; // 是否在同一位置跳跃
-
-    public Character(String name,boolean leftOrRight,String rootDir,int x,int y) {
-        Toolkit tk =Toolkit.getDefaultToolkit();
-        this.name = name;
-
+    private boolean isJumpingAtSameSpot = true; // 是否在同一位置跳跃    private static final long KICK_COOLDOWN = 1000;
+    
+    private ArrayList<Dimension> movementSizes; // 新增：保存每个动作图片的实际尺寸
+    
+    public Character(String name, boolean leftOrRight,String rootDir,int x, int y ) {
+        Toolkit tk = Toolkit.getDefaultToolkit();
         movements = new ArrayList<Image>();
+        movementSizes = new ArrayList<Dimension>(); // 初始化尺寸列表
         position = new Point(x,y);
 
 
-        for(int i = 1; i <= 12; i++) {
+        for(int i = 1; i <= 8; i++) {//将图片加载到ArrayList
             movements.add(tk.getImage(Character.class.getClassLoader()
                     .getResource(rootDir + "/" + i + ".gif")));
         }
-
         dir = new Dir(leftOrRight);//监控动作
         dir.setCurrentDir(leftOrRight);
         dir.createMap(movements);//创建对应动作maps
@@ -84,14 +84,48 @@ public class Character {
             rightAttackBox.updatePosition();
             leftKickBox.updatePosition();
             rightKickBox.updatePosition();
+
             
-            g.drawImage(currentMovement,
-                    (int)position.getX(),
-                    (int)position.getY(),
-                    currentMovement.getWidth(null) * 2,
-                    currentMovement.getHeight(null) * 2,null);
+            // 获取预加载时保存的准确尺寸
+            Dimension actualSize = getMovementSize(currentMovement);
+            String currentAction = dir.getCurrentAction();
+            if (actualSize != null) {
+                // 使用准确尺寸进行缩放
+                int drawWidth = actualSize.width * 2;
+                int drawHeight = actualSize.height * 2;
+                int originalWidth = currentMovement.getWidth(null);
+                int originalHeight = currentMovement.getHeight(null);
+                // 绘制图片，使用准确尺寸避免缩放问题
+                g.drawImage(currentMovement,
+                        (int)position.getX(),
+                        (int)position.getY(),
+                        drawWidth,
+                        drawHeight,
+                        //originalWidth * 2,
+                        //originalHeight * 2,
+                        null);
+                //if(currentAction.equals("LDEF"))System.out.println(drawWidth+","+drawHeight);
+            } else {
+
+                System.out.println("图片未加载完成，跳过绘制");
+
+            }
         }
 
+    }
+    
+    /**
+     * 根据图片对象获取预加载时保存的准确尺寸
+     * @param movement 动作图片
+     * @return 图片尺寸，如果未找到返回null
+     */
+    private Dimension getMovementSize(Image movement) {
+        for (int i = 0; i < movements.size(); i++) {
+            if (movements.get(i) == movement) {
+                return movementSizes.get(i);
+            }
+        }
+        return null;
     }
 
     /**
@@ -104,6 +138,12 @@ public class Character {
         // 如果被攻击者处于击倒状态，则无法再次被攻击
         if(fighter2.getDir().FALL) {
             System.out.println("攻击检测: 被攻击者处于FALL状态，无法被攻击");
+            return false;
+        }
+        
+        // 如果被攻击者处于防御状态，则不造成伤害
+        if(fighter2.getDir().DEFEND) {
+            System.out.println("攻击检测: 被攻击者处于DEFEND状态，攻击被防御");
             return false;
         }
         
@@ -131,33 +171,6 @@ public class Character {
             System.out.println("攻击检测: 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ") - 攻击失败");
         }
         
-        return false;
-    }
-
-    public static boolean isKicked(Character fighter1,Character fighter2){
-        if(fighter2.getDir().FALL) {
-            System.out.println("踢腿检测: 被攻击者处于FALL状态，无法被踢中");
-            return false;
-        }
-        AttackBox kickBox = null;
-        if (fighter1.getDir().getCurrentDir() == Character.RIGHT) {
-            // 使用左腿攻击箱
-            kickBox = fighter1.leftKickBox;
-        } else {
-            // 使用右腿攻击箱
-            kickBox = fighter1.rightKickBox;
-        }
-        boolean isHit = kickBox.intersects(fighter2.getHitbox());
-        if (isHit) {
-            Point p1 = fighter1.getPosition();
-            Point p2 = fighter2.getPosition();
-            System.out.println("kick! 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ") - 踢腿成功！");
-            return true;
-        } else {
-            Point p1 = fighter1.getPosition();
-            Point p2 = fighter2.getPosition();
-            System.out.println("踢腿检测: 攻击者位置: (" + p1.x + ", " + p1.y + "), 被攻击者位置: (" + p2.x + ", " + p2.y + ") - 踢腿失败");
-        }
         return false;
     }
     
@@ -225,6 +238,12 @@ public class Character {
     public AttackBox getRightAttackBox() {
         return rightAttackBox;
     }
+    public AttackBox getLeftKickBox() {
+        return leftKickBox;
+    }
+    public AttackBox getRightKickBox() {
+        return rightKickBox;
+    }
     public int getSPEED() {
         return SPEED;
     }
@@ -265,84 +284,6 @@ public class Character {
     public long getRemainingCooldown() {
         long elapsed = System.currentTimeMillis() - lastAttackTime;
         return Math.max(0, ATTACK_COOLDOWN - elapsed);
-    }
-
-    public boolean canKick(){
-        return System.currentTimeMillis() - lastKickTime >= KICK_COOLDOWN;
-    }
-    public void setKickTime(){
-        lastKickTime = System.currentTimeMillis();
-    }
-    public long getKickRemainingCooldown(){
-        long elapsed = System.currentTimeMillis() - lastKickTime;
-        return Math.max(0, KICK_COOLDOWN - elapsed);
-    }
-
-    public boolean isJumping() {
-        return dir.JUMPING;
-    }
-
-    public void setJumping(boolean jumping) {
-        dir.JUMPING = jumping;
-    }
-
-    public boolean isOnGround() {
-        return isOnGround;
-    }
-
-    public void setOnGround(boolean onGround) {
-        this.isOnGround = onGround;
-    }
-
-    public double getJumpVelocity() {
-        return jumpVelocity;
-    }
-
-    public void setJumpVelocity(double velocity) {
-        this.jumpVelocity = velocity;
-    }
-
-    public void updateJumpVelocity() {
-        this.jumpVelocity += GRAVITY;
-    }
-
-    public int getGroundY() {
-        // 返回地面Y坐标，可以根据实际情况调整
-        return 260;
-    }
-
-    /**
-     * 开始跳跃
-     */
-    public void startJump() {
-        if (isOnGround) {
-            // 保存起跳位置
-            jumpStartPosition.setLocation(position);
-            setJumping(true);
-            setOnGround(false);
-            setJumpVelocity(JUMP_FORCE);
-        }
-    }
-    
-    /**
-     * 获取起跳位置
-     */
-    public Point getJumpStartPosition() {
-        return jumpStartPosition;
-    }
-    
-    /**
-     * 是否设置为在同一位置跳跃
-     */
-    public boolean isJumpingAtSameSpot() {
-        return isJumpingAtSameSpot;
-    }
-    
-    /**
-     * 设置是否在同一位置跳跃
-     */
-    public void setJumpingAtSameSpot(boolean jumpingAtSameSpot) {
-        isJumpingAtSameSpot = jumpingAtSameSpot;
     }
 }
 

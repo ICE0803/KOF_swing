@@ -247,10 +247,14 @@ public class MyFrameOffline extends JFrame {
                 playerFighter.getHitbox().drawBounds(g);
                 playerFighter.getLeftAttackBox().drawBounds(g);
                 playerFighter.getRightAttackBox().drawBounds(g);
+                playerFighter.getLeftKickBox().drawBounds(g);
+                playerFighter.getRightKickBox().drawBounds(g);
                 
                 aiFighter.getHitbox().drawBounds(g);
                 aiFighter.getLeftAttackBox().drawBounds(g);
                 aiFighter.getRightAttackBox().drawBounds(g);
+                aiFighter.getLeftKickBox().drawBounds(g);
+                aiFighter.getRightKickBox().drawBounds(g);
             }
             
             //判断输赢
@@ -379,10 +383,13 @@ public class MyFrameOffline extends JFrame {
                         fighter.startJump();
                     }
                     break;
+                case KeyEvent.VK_L:
+                    fighter.getDir().DEFEND = true;
+                    break;
             }
             
             if(keyCode == KeyEvent.VK_W ||
-                    keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J ||keyCode == KeyEvent.VK_K || keyCode == KeyEvent.VK_SPACE){
+                    keyCode == KeyEvent.VK_S ||keyCode == KeyEvent.VK_A ||keyCode == KeyEvent.VK_D ||keyCode == KeyEvent.VK_J) {
                 fighter.getDir().LS = false;
                 fighter.getDir().RS = false;
             }
@@ -406,9 +413,6 @@ public class MyFrameOffline extends JFrame {
                     break;
                 case KeyEvent.VK_D:
                     fighter.getDir().LF = false;
-                    break;
-                case KeyEvent.VK_K:
-                    fighter.getDir().KICK = false;
                     break;
             }
         }

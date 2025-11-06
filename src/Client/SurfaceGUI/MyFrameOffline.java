@@ -290,6 +290,9 @@ public class MyFrameOffline extends JFrame {
         }
     }
     
+    // 添加是否按下Shift键的标志
+    private boolean isShiftPressed = false;
+    
     public void getKeyPressed(Character fighter, int keyCode) {
         // 只处理玩家控制的角色
         if (fighter.equals(playerFighter)) {
@@ -304,13 +307,30 @@ public class MyFrameOffline extends JFrame {
                     if(currentDir == Character.LEFT) fighter.getDir().LD = true;
                     else fighter.getDir().RD = true;
                     break;
+                case KeyEvent.VK_SHIFT:
+                    isShiftPressed = true;
+                    break;
                 case KeyEvent.VK_A:
                     fighter.getDir().setCurrentDir(Character.RIGHT);//保存当前方向
-                    fighter.getDir().RF = true;
+                    if (isShiftPressed) {
+                        // Shift+A：快速向左移动
+                        fighter.getDir().DASH_LEFT = true;
+                        fighter.getDir().LS = false;
+                        fighter.getDir().RS = false;
+                    } else {
+                        fighter.getDir().RF = true;
+                    }
                     break;
                 case KeyEvent.VK_D:
                     fighter.getDir().setCurrentDir(Character.LEFT);//保存当前方向
-                    fighter.getDir().LF = true;
+                    if (isShiftPressed) {
+                        // Shift+D：快速向右移动
+                        fighter.getDir().DASH_RIGHT = true;
+                        fighter.getDir().LS = false;
+                        fighter.getDir().RS = false;
+                    } else {
+                        fighter.getDir().LF = true;
+                    }
                     break;
                 case KeyEvent.VK_J:
                     // 检查攻击冷却时间
@@ -410,12 +430,20 @@ public class MyFrameOffline extends JFrame {
                     break;
                 case KeyEvent.VK_A:
                     fighter.getDir().RF = false;
+                    fighter.getDir().DASH_LEFT = false;
                     break;
                 case KeyEvent.VK_D:
                     fighter.getDir().LF = false;
+                    fighter.getDir().DASH_RIGHT = false;
                     break;
                 case KeyEvent.VK_L:
                     fighter.getDir().DEFEND = false;
+                    break;
+                case KeyEvent.VK_SHIFT:
+                    isShiftPressed = false;
+                    // 松开Shift键时，确保快速移动状态被清除
+                    fighter.getDir().DASH_LEFT = false;
+                    fighter.getDir().DASH_RIGHT = false;
                     break;
             }
             if(keyCode == KeyEvent.VK_W ||

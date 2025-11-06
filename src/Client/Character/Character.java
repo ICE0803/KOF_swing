@@ -15,7 +15,8 @@ public class Character {
 
     private  ArrayList<Image> movements;//人物角色的动作：左右停
 
-    private int SPEED = 10;//当前移动速度（放大人物后适当提高速度）
+    private int SPEED = 5;//当前移动速度（放大人物后适当提高速度）
+    private int DASH_SPEED = 10;//快速移动速度（普通速度的2倍）
 
     private Point position;//当前位置
 
@@ -39,6 +40,8 @@ public class Character {
     private Point jumpStartPosition = new Point(0, 0); // 起跳位置
     private boolean isJumpingAtSameSpot = false; // 是否在同一位置跳跃
     private long lastJumpTime = 0; // 上次跳跃时间
+    private boolean isDashing = false; // 是否正在快速移动
+    private boolean dashDirection = Character.RIGHT; // 快速移动方向
     
     private ArrayList<Dimension> movementSizes; // 新增：保存每个动作图片的实际尺寸
     
@@ -215,6 +218,11 @@ public class Character {
      * @param character2 角色2
      */
     public static void preventOverlap(Character character1, Character character2) {
+        // 如果任一角色正在快速移动，暂时禁用重叠防止，以确保快速移动的连贯性
+        if (character1.isDashing() || character2.isDashing()) {
+            return;
+        }
+        
         // 检查两个角色的碰撞箱是否相交
         if (character1.getHitbox().intersects(character2.getHitbox())) {
             // 获取两个角色的位置
@@ -574,6 +582,26 @@ public class Character {
      */
     public void setJumpingAtSameSpot(boolean jumpingAtSameSpot) {
         this.isJumpingAtSameSpot = jumpingAtSameSpot;
+    }
+    
+    public boolean isDashing() {
+        return isDashing;
+    }
+    
+    public void setDashing(boolean dashing) {
+        isDashing = dashing;
+    }
+    
+    public boolean getDashDirection() {
+        return dashDirection;
+    }
+    
+    public void setDashDirection(boolean direction) {
+        dashDirection = direction;
+    }
+    
+    public int getDASH_SPEED() {
+        return DASH_SPEED;
     }
 }
 

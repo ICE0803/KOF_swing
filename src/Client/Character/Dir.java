@@ -28,6 +28,8 @@ public class Dir {
     public boolean JUMPING;
     public boolean JUMP_UP;
     public boolean JUMP_DOWN;
+    public boolean DASH_LEFT; // 快速向左移动
+    public boolean DASH_RIGHT; // 快速向右移动
 
 
     public Dir(boolean isLeft) {//初始状态是面向左还是面向右
@@ -49,6 +51,8 @@ public class Dir {
         JUMPING = false;
         JUMP_UP = false;
         JUMP_DOWN = false;
+        DASH_LEFT = false;
+        DASH_RIGHT = false;
     }
 
 
@@ -66,8 +70,7 @@ public class Dir {
     }//创建动作图对应maps
 
     public void locateDirection() {
-        if(!LF && !RF && !RU && !LU && !RD && //无动作触发，站立
-                !LD && !A && !FALL && !KICK && !DEFEND && !JUMPING && !JUMP_UP && !JUMP_DOWN) {//如果没有其他动作，就站立
+        if(!LF && !RF && !RU && !LU && !RD && !LD && !A && !FALL && !KICK && !DEFEND && !JUMPING && !JUMP_UP && !JUMP_DOWN && !DASH_LEFT && !DASH_RIGHT) {//如果没有其他动作，就站立
             if (getCurrentDir() == Character.LEFT) {
                 LS = true;
                 setCurrentMovement(getMoveMap().get("LS"));
@@ -78,12 +81,16 @@ public class Dir {
         } else if(FALL) {//如果检测被击倒
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LH"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RH"));
-
-        }
-        else if(A) {//若检测到攻击键按下
+        } else if(DASH_LEFT) {
+            // 快速向左移动时显示往左走路动作
+            setCurrentMovement(getMoveMap().get("RF"));
+        } else if(DASH_RIGHT) {
+            // 快速向右移动时显示往右走路动作
+            setCurrentMovement(getMoveMap().get("LF"));
+        } else if(A) {//若检测到攻击键按下
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LA"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RA"));
-        }else if(KICK){
+        } else if(KICK){
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LK"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RK"));
         } else if(DEFEND){
@@ -93,12 +100,12 @@ public class Dir {
             if (getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LJ"));
             else  setCurrentMovement(getMoveMap().get("RJ"));
         } else {
-                if (LF || LU || LD) {
-                    setCurrentMovement(getMoveMap().get("LF"));//否则前进
-                } else if (RF || RU || RD){
-                    setCurrentMovement(getMoveMap().get("RF"));
-                }
+            if (LF || LU || LD) {
+                setCurrentMovement(getMoveMap().get("LF"));//否则前进
+            } else if (RF || RU || RD){
+                setCurrentMovement(getMoveMap().get("RF"));
             }
+        }
     }//确定方向
 
     public int limitLocation(int position, int speed, int min, int max,boolean isPlus) {
@@ -170,12 +177,24 @@ public class Dir {
         }
         
         // 处理水平移动（无论是否跳跃都允许）
-        if(!LS && !RS && !FALL) {
-            if (LF) {//往右走
-                character.getPosition().x = limitLocation(character.getPosition().x, character.getSPEED(), 0, 730, true);
-            }
-            if (RF) {//往左走
-                character.getPosition().x = limitLocation(character.getPosition().x, character.getSPEED(), 0, 730, false);
+        if(!FALL) {
+            // 快速移动优先级高于普通移动
+            if (DASH_RIGHT) {
+                character.setDashing(true);
+                character.setDashDirection(Character.RIGHT);
+                character.getPosition().x = limitLocation(character.getPosition().x, character.getDASH_SPEED(), 0, 730, true);
+            } else if (DASH_LEFT) {
+                character.setDashing(true);
+                character.setDashDirection(Character.LEFT);
+                character.getPosition().x = limitLocation(character.getPosition().x, character.getDASH_SPEED(), 0, 730, false);
+            } else if(!LS && !RS) {
+                character.setDashing(false);
+                if (LF) {//往右走
+                    character.getPosition().x = limitLocation(character.getPosition().x, character.getSPEED(), 0, 730, true);
+                }
+                if (RF) {//往左走
+                    character.getPosition().x = limitLocation(character.getPosition().x, character.getSPEED(), 0, 730, false);
+                }
             }
             
             // 只有不在跳跃时才允许垂直移动（地面移动）
@@ -261,6 +280,10 @@ public class Dir {
             return getCurrentDir() == Character.LEFT ? "LDEF" : "RDEF";
         } else if(JUMPING){
             return getCurrentDir() == Character.LEFT ? "LJ" : "RJ";
+        } else if (DASH_LEFT) {
+            return "RF"; // 快速向左移动时返回左走动作键名
+        } else if (DASH_RIGHT) {
+            return "LF"; // 快速向右移动时返回右走动作键名
         } else if (LF || LU || LD) {
             return "LF";
         } else if (RF || RU || RD) {

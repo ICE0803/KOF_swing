@@ -52,7 +52,7 @@ public class Character {
         position = new Point(x,y);
 
 
-        for(int i = 1; i <= 14; i++) {
+        for(int i = 1; i <= 16; i++) {
             // 添加资源路径检查和调试信息
             String resourcePath = rootDir + "/" + i + ".gif";
             java.net.URL resourceUrl = Character.class.getClassLoader().getResource(resourcePath);
@@ -218,10 +218,6 @@ public class Character {
      * @param character2 角色2
      */
     public static void preventOverlap(Character character1, Character character2) {
-        // 如果任一角色正在快速移动，暂时禁用重叠防止，以确保快速移动的连贯性
-        if (character1.isDashing() || character2.isDashing()) {
-            return;
-        }
         
         // 检查两个角色的碰撞箱是否相交
         if (character1.getHitbox().intersects(character2.getHitbox())) {

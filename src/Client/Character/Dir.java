@@ -61,7 +61,7 @@ public class Dir {
         //将movement做成maps
         //Left Forward, Left Stand, ...往右走，往右停，往左走，往左停,左攻击，右攻击，左倒，右倒
         //添加踢腿相关键名
-        String[] keys = {"LF","LS","RF","RS","LA","RA","LH","RH","LK","RK","LDEF","RDEF","LJ","RJ"};
+        String[] keys = {"LF","LS","RF","RS","LA","RA","LH","RH","LK","RK","LDEF","RDEF","LJ","RJ","L_DASH","R_DASH"};
         for(int i = 0; i < movements.size(); i++) {
             moveMap.put(keys[i],movements.get(i));
         }
@@ -82,11 +82,11 @@ public class Dir {
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LH"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RH"));
         } else if(DASH_LEFT) {
-            // 快速向左移动时显示往左走路动作
-            setCurrentMovement(getMoveMap().get("RF"));
+            // 快速向左移动时显示专门的快速移动动作
+            setCurrentMovement(getMoveMap().get("L_DASH"));
         } else if(DASH_RIGHT) {
-            // 快速向右移动时显示往右走路动作
-            setCurrentMovement(getMoveMap().get("LF"));
+            // 快速向右移动时显示专门的快速移动动作
+            setCurrentMovement(getMoveMap().get("R_DASH"));
         } else if(A) {//若检测到攻击键按下
             if(getCurrentDir() == Character.LEFT) setCurrentMovement(getMoveMap().get("LA"));//如果LA为真，则触发攻击动作
             else  setCurrentMovement(getMoveMap().get("RA"));
@@ -281,9 +281,9 @@ public class Dir {
         } else if(JUMPING){
             return getCurrentDir() == Character.LEFT ? "LJ" : "RJ";
         } else if (DASH_LEFT) {
-            return "RF"; // 快速向左移动时返回左走动作键名
+            return "L_DASH"; // 快速向左移动时返回左快速移动动作键名
         } else if (DASH_RIGHT) {
-            return "LF"; // 快速向右移动时返回右走动作键名
+            return "R_DASH"; // 快速向右移动时返回右快速移动动作键名
         } else if (LF || LU || LD) {
             return "LF";
         } else if (RF || RU || RD) {

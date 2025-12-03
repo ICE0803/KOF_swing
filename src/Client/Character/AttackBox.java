@@ -11,6 +11,8 @@ public class AttackBox {
     private Rectangle bounds; // 攻击箱边界
     private Character character; // 关联的角色
     private String attackType; // 攻击类型("LA"或"RA")
+
+    public static final int DEPTH_TOLERANCE = 100;
     
     /**
      * 构造函数
@@ -80,7 +82,16 @@ public class AttackBox {
      * @return 是否发生攻击碰撞
      */
     public boolean intersects(Hitbox other) {
-        return this.bounds.intersects(other.getBounds());
+        Rectangle otherBounds = other.getBounds();
+        
+        // 2.5D 处理：如果纵向（Y）中心点相差过大，则认为不在同一“深度”，不发生攻击碰撞
+        double thisCenterY = bounds.getCenterY();
+        double otherCenterY = otherBounds.getCenterY();
+        if (Math.abs(thisCenterY - otherCenterY) > AttackBox.DEPTH_TOLERANCE) {
+            return false;
+        }
+        
+        return this.bounds.intersects(otherBounds);
     }
     
     /**

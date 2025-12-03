@@ -15,6 +15,13 @@ public class Hitbox {
     private int bottomMargin; // 下边距
     
     /**
+     * 2.5D 场景下的“纵向容差”
+     * 当两个角色在 Y 方向（深度）上的中心点距离大于该值时，
+     * 认为它们不在同一“跑道”上，不发生身体/攻击碰撞。
+     */
+    public static final int DEPTH_TOLERANCE = 40;
+    
+    /**
      * 构造函数
      * @param character 关联的角色
      * @param leftMargin 左边距
@@ -45,6 +52,14 @@ public class Hitbox {
     public boolean intersects(Hitbox other) {
         Rectangle thisBounds = this.getBounds();
         Rectangle otherBounds = other.getBounds();
+        
+        // 2.5D 处理：如果纵向（Y）中心点相差过大，则认为不在同一“深度”，不发生碰撞
+        double thisCenterY = thisBounds.getCenterY();
+        double otherCenterY = otherBounds.getCenterY();
+        if (Math.abs(thisCenterY - otherCenterY) > DEPTH_TOLERANCE) {
+            return false;
+        }
+        
         return thisBounds.intersects(otherBounds);
     }
     

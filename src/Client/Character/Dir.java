@@ -30,6 +30,9 @@ public class Dir {
     public boolean JUMP_DOWN;
     public boolean DASH_LEFT; // 快速向左移动
     public boolean DASH_RIGHT; // 快速向右移动
+    
+    // 受击倒状态开始的时间，用于做闪烁效果等
+    private long fallStartTime;
 
 
     public Dir(boolean isLeft) {//初始状态是面向左还是面向右
@@ -118,6 +121,16 @@ public class Dir {
     }//限制角色走出范围
 
     public void move(Graphics g, Character character) {//更新图片
+        // 如果处于防御状态，禁止角色移动，只更新当前防御动作的绘制
+        if (DEFEND) {
+            character.drawCurrentMovement(g);
+            // 防止角色与对手重叠（即使防御也要保持不穿模）
+            if (otherCharacter != null) {
+                Character.preventOverlap(character, otherCharacter);
+            }
+            return;
+        }
+
         // 处理跳跃逻辑
         if (character.isJumping()) {
             // 更新跳跃速度（应用重力）
@@ -125,7 +138,7 @@ public class Dir {
 
             // 更新Y位置
             character.getPosition().y += character.getJumpVelocity();
-            
+
             // 水平边界限制（防止跳出屏幕左右两侧）
             int leftBound = 0;      // 左边界
             int rightBound = 730;   // 右边界（与原有limitLocation方法保持一致）
@@ -137,7 +150,7 @@ public class Dir {
 
             // 根据跳跃模式决定落地逻辑
             boolean shouldEndJump = false;
-            
+
             // 模式1：原地跳跃模式（落回起跳位置）
             if (character.isJumpingAtSameSpot() && character.getJumpVelocity() > 0) {
                 // 当跳跃高度开始回落，且回到初始位置时完成跳跃
@@ -146,13 +159,13 @@ public class Dir {
                     character.getPosition().setLocation(character.getJumpStartPosition());
                     shouldEndJump = true;
                 }
-            } 
+            }
             if (character.getJumpVelocity() > 0 && character.getPosition().y >= character.getJumpStartPosition().y) {
                 // 保持水平位置不变，只将Y位置设置为起跳时的Y坐标
                 character.getPosition().y = character.getJumpStartPosition().y;
                 shouldEndJump = true;
             }
-            
+
             // 统一处理跳跃结束逻辑
             if (shouldEndJump) {
                 character.setJumping(false);
@@ -161,7 +174,7 @@ public class Dir {
                 JUMP_UP = false;
                 JUMP_DOWN = false;
             }
-            
+
             // 更新跳跃状态
             if (character.isJumping()) {
                 if (character.getJumpVelocity() < 0) {
@@ -175,7 +188,7 @@ public class Dir {
                 }
             }
         }
-        
+
         // 处理水平移动（无论是否跳跃都允许）
         if(!FALL) {
             // 快速移动优先级高于普通移动
@@ -236,6 +249,8 @@ public class Dir {
         Runnable task1 = new Runnable() {
             @Override
             public void run() {
+                // 记录开始被击倒的时间
+                fallStartTime = System.currentTimeMillis();
                 FALL = true;
                 try {
                     Thread.sleep(500);
@@ -247,6 +262,13 @@ public class Dir {
         };
         Thread thread1 = new Thread(task1);
         thread1.start();
+    }
+    
+    /**
+     * 获取被击倒状态开始的时间，用于闪烁等效果
+     */
+    public long getFallStartTime() {
+        return fallStartTime;
     }
 
     public Image getCurrentMovement() {

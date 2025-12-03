@@ -1,6 +1,7 @@
 package Client.Character;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 import java.util.ArrayList;
 
@@ -45,6 +46,18 @@ public class Character {
     
     private ArrayList<Dimension> movementSizes; // 新增：保存每个动作图片的实际尺寸
     
+    // 左侧跳跃关键帧（上升/下降）
+    private Image leftJumpUpFrame;
+    private Image leftJumpDownFrame;
+    private Dimension leftJumpUpSize;
+    private Dimension leftJumpDownSize;
+    
+    // 右侧跳跃关键帧（上升/下降）
+    private Image rightJumpUpFrame;
+    private Image rightJumpDownFrame;
+    private Dimension rightJumpUpSize;
+    private Dimension rightJumpDownSize;
+    
     public Character(String name, boolean leftOrRight,String rootDir,int x, int y ) {
         Toolkit tk = Toolkit.getDefaultToolkit();
         movements = new ArrayList<Image>();
@@ -80,6 +93,19 @@ public class Character {
         dir.setCurrentDir(leftOrRight);
         dir.createMap(movements);//创建对应动作maps
         
+        // 将防御动作的 GIF 固定为静态帧，避免一直播放导致视觉怪异
+        freezeDefendFrame("LDEF");
+        freezeDefendFrame("RDEF");
+        // 使用你导出的关键帧 PNG 覆盖左右防御动作
+        // 假设资源目录结构为 images/<角色名>/LD 或 RD
+        setDefendImageFromPng("LDEF", rootDir + "/LD/frame_2.png");
+        setDefendImageFromPng("RDEF", rootDir + "/RD/frame_2.png");
+        
+        // 加载左侧跳跃的上升/下降关键帧（LJ_up.png / LJ_down.png）
+        loadLeftJumpFrames(rootDir);
+        // 加载右侧跳跃的上升/下降关键帧（RJ_up.png / RJ_down.png）
+        loadRightJumpFrames(rootDir);
+        
         // 初始化碰撞箱（使用边距参数）
         // 这些值需要根据实际图片调整，暂时使用示例值
         this.hitbox = new Hitbox(this, 10, 100, 10, 150);
@@ -92,13 +118,182 @@ public class Character {
 
     }//将图片载入缓存区, 并且做好索引
 
+    /**
+     * 将某个动作键对应的 GIF 转换为静态图片（当前帧），用于防御等需要保持姿势的状态
+     * @param key 动作键名，如"LDEF"、"RDEF"
+     */
+    private void freezeDefendFrame(String key) {
+        if (dir == null || dir.getMoveMap() == null) {
+            return;
+        }
+        Image original = dir.getMoveMap().get(key);
+        if (original == null) {
+            return;
+        }
+
+        // 构造一个与原图尺寸相同的 BufferedImage，只绘制一次得到静态帧
+        int width = original.getWidth(null);
+        int height = original.getHeight(null);
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        BufferedImage staticImg = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = staticImg.createGraphics();
+        g2d.drawImage(original, 0, 0, null);
+        g2d.dispose();
+
+        // 替换 Dir 中的动作图片
+        dir.getMoveMap().put(key, staticImg);
+
+        // 同步替换 movements 列表中的引用，保证尺寸查询仍然有效
+        for (int i = 0; i < movements.size(); i++) {
+            if (movements.get(i) == original) {
+                movements.set(i, staticImg);
+                // 若之前尺寸为空，则补上
+                if (movementSizes != null) {
+                    Dimension size = movementSizes.get(i);
+                    if (size == null) {
+                        movementSizes.set(i, new Dimension(width, height));
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    /**
+     * 使用导出的 PNG 静态帧替换某个防御动作图片
+     * @param key          动作键名，如"LDEF"
+     * @param resourcePath 类路径下的资源路径，例如 "images/cao/LD/frame_2.png"
+     */
+    private void setDefendImageFromPng(String key, String resourcePath) {
+        if (dir == null || dir.getMoveMap() == null) {
+            return;
+        }
+        java.net.URL url = Character.class.getClassLoader().getResource(resourcePath);
+        if (url == null) {
+            System.err.println("找不到防御帧资源: " + resourcePath);
+            return;
+        }
+
+        javax.swing.ImageIcon icon = new javax.swing.ImageIcon(url);
+        Image newImg = icon.getImage();
+        int width = icon.getIconWidth();
+        int height = icon.getIconHeight();
+
+        if (width <= 0 || height <= 0) {
+            System.err.println("防御帧尺寸异常: " + resourcePath);
+            return;
+        }
+
+        // 旧图，用于在 movements 里做替换
+        Image old = dir.getMoveMap().get(key);
+
+        // 替换 Dir 中的动作图片
+        dir.getMoveMap().put(key, newImg);
+
+        // 同步替换 movements 列表中的引用，保证尺寸查询仍然有效
+        if (old != null) {
+            for (int i = 0; i < movements.size(); i++) {
+                if (movements.get(i) == old) {
+                    movements.set(i, newImg);
+                    if (movementSizes != null) {
+                        if (i < movementSizes.size()) {
+                            movementSizes.set(i, new Dimension(width, height));
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * 加载左侧跳跃关键帧（上升 / 下降），文件名约定为：
+     * rootDir + "/LJ_up.png" 和 rootDir + "/LJ_down.png"
+     */
+    private void loadLeftJumpFrames(String rootDir) {
+        // 上升帧
+        java.net.URL upUrl = Character.class.getClassLoader().getResource(rootDir + "/LJ_up.png");
+        if (upUrl != null) {
+            javax.swing.ImageIcon upIcon = new javax.swing.ImageIcon(upUrl);
+            leftJumpUpFrame = upIcon.getImage();
+            leftJumpUpSize = new Dimension(upIcon.getIconWidth(), upIcon.getIconHeight());
+        } else {
+            System.err.println("未找到左跳跃上升帧: " + rootDir + "/LJ_up.png");
+        }
+
+        // 下降帧
+        java.net.URL downUrl = Character.class.getClassLoader().getResource(rootDir + "/LJ_down.png");
+        if (downUrl != null) {
+            javax.swing.ImageIcon downIcon = new javax.swing.ImageIcon(downUrl);
+            leftJumpDownFrame = downIcon.getImage();
+            leftJumpDownSize = new Dimension(downIcon.getIconWidth(), downIcon.getIconHeight());
+        } else {
+            System.err.println("未找到左跳跃下降帧: " + rootDir + "/LJ_down.png");
+        }
+    }
+
+    /**
+     * 加载右侧跳跃关键帧（上升 / 下降），文件名约定为：
+     * rootDir + "/RJ_up.png" 和 rootDir + "/RJ_down.png"
+     */
+    private void loadRightJumpFrames(String rootDir) {
+        // 上升帧
+        java.net.URL upUrl = Character.class.getClassLoader().getResource(rootDir + "/RJ_up.png");
+        if (upUrl != null) {
+            javax.swing.ImageIcon upIcon = new javax.swing.ImageIcon(upUrl);
+            rightJumpUpFrame = upIcon.getImage();
+            rightJumpUpSize = new Dimension(upIcon.getIconWidth(), upIcon.getIconHeight());
+        } else {
+            System.err.println("未找到右跳跃上升帧: " + rootDir + "/RJ_up.png");
+        }
+
+        // 下降帧
+        java.net.URL downUrl = Character.class.getClassLoader().getResource(rootDir + "/RJ_down.png");
+        if (downUrl != null) {
+            javax.swing.ImageIcon downIcon = new javax.swing.ImageIcon(downUrl);
+            rightJumpDownFrame = downIcon.getImage();
+            rightJumpDownSize = new Dimension(downIcon.getIconWidth(), downIcon.getIconHeight());
+        } else {
+            System.err.println("未找到右跳跃下降帧: " + rootDir + "/RJ_down.png");
+        }
+    }
+
 
     //将当前动作画上面板（可以重写调整每一帧动作的图片位置）
     protected void drawCurrentMovement(Graphics g) {
         // 先更新方向再获取当前动作
         dir.locateDirection();//更新目前的动作
         Image currentMovement = dir.getCurrentMovement();
+        String currentAction = dir.getCurrentAction();
         
+        // 若处于被击倒状态，做一个简单的闪烁效果（例如 100ms 一次开关）
+        // 不额外导入动图，通过“画 / 不画”制造闪烁两下的感觉
+        if (dir.FALL) {
+            long elapsed = System.currentTimeMillis() - dir.getFallStartTime();
+            int interval = 100; // 闪烁间隔（毫秒），可根据手感微调
+            // 这里简单让角色在偶数段不绘制，从而产生闪烁
+            if ((elapsed / interval) % 2 == 0) {
+                return;
+            }
+        }
+        
+        // 跳跃动作：对于左右跳跃，使用你提供的上升/下降关键帧替代原 GIF
+        if ("LJ".equals(currentAction) && dir.getCurrentDir() == Character.LEFT) {
+            if (getJumpVelocity() < 0 && leftJumpUpFrame != null) {
+                currentMovement = leftJumpUpFrame;
+            } else if (getJumpVelocity() >= 0 && leftJumpDownFrame != null) {
+                currentMovement = leftJumpDownFrame;
+            }
+        } else if ("RJ".equals(currentAction) && dir.getCurrentDir() == Character.RIGHT) {
+            if (getJumpVelocity() < 0 && rightJumpUpFrame != null) {
+                currentMovement = rightJumpUpFrame;
+            } else if (getJumpVelocity() >= 0 && rightJumpDownFrame != null) {
+                currentMovement = rightJumpDownFrame;
+            }
+        }
+
         // 添加null检查避免空指针异常
         if (currentMovement != null) {
             // 更新碰撞箱位置
@@ -111,9 +306,24 @@ public class Character {
             rightKickBox.updatePosition();
 
             
-            // 获取预加载时保存的准确尺寸
-            Dimension actualSize = getMovementSize(currentMovement);
-            String currentAction = dir.getCurrentAction();
+            // 获取绘制尺寸：左右跳跃关键帧单独使用自身尺寸，其它动作用预加载尺寸
+            Dimension actualSize = null;
+            if ("LJ".equals(currentAction) && dir.getCurrentDir() == Character.LEFT) {
+                if (currentMovement == leftJumpUpFrame && leftJumpUpSize != null) {
+                    actualSize = leftJumpUpSize;
+                } else if (currentMovement == leftJumpDownFrame && leftJumpDownSize != null) {
+                    actualSize = leftJumpDownSize;
+                }
+            } else if ("RJ".equals(currentAction) && dir.getCurrentDir() == Character.RIGHT) {
+                if (currentMovement == rightJumpUpFrame && rightJumpUpSize != null) {
+                    actualSize = rightJumpUpSize;
+                } else if (currentMovement == rightJumpDownFrame && rightJumpDownSize != null) {
+                    actualSize = rightJumpDownSize;
+                }
+            }
+            if (actualSize == null) {
+                actualSize = getMovementSize(currentMovement);
+            }
             if (actualSize != null) {
                 // 使用准确尺寸进行缩放
                 int drawWidth = actualSize.width * 2;
